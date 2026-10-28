@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BizBuilder — конструктор приложений и CRM</title>
+<style>
+:root{
+  --bg:#f5f3ef;--panel:#fff;--ink:#1d1c1a;--muted:#77726a;--line:#e7e2da;--soft:#faf8f5;
+  --acc:#e8641b;--acc-soft:#fdeee4;--ok:#2f8f5b;--bad:#c8402f;--r:10px;--side:248px;
+  --font:"Segoe UI Variable","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+#app{display:flex;min-height:100vh}
+/* sidebar */
+#side{width:var(--side);flex:none;background:#1f1d1a;color:#ece8e1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.logo{padding:20px 18px 14px;font-weight:700;font-size:17px;letter-spacing:-.2px;display:flex;align-items:center;gap:9px}
+.logo i{width:22px;height:22px;border-radius:6px;background:var(--acc);display:inline-block;position:relative}
+.logo i:after{content:"";position:absolute;inset:6px;border:2px solid #1f1d1a;border-radius:2px}
+.side-h{padding:14px 18px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#a8a196}
+.apps{flex:1;overflow:auto;padding:0 8px}
+.appbtn{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;color:inherit;padding:9px 10px;border-radius:8px;text-align:left}
+.appbtn:hover{background:#2b2925}
+.appbtn.on{background:#34312c}
+.dot{width:10px;height:10px;border-radius:3px;flex:none}
+.appbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-f{padding:12px;border-top:1px solid #34312c;display:grid;gap:6px}
+.sbtn{background:#2b2925;border:0;color:#ece8e1;padding:9px 10px;border-radius:8px;text-align:left}
+.sbtn:hover{background:#38352f}
+.sbtn.acc{background:var(--acc);color:#fff;font-weight:600}
+.sbtn.acc:hover{filter:brightness(1.07)}
+/* main */
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+#top{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 24px 0;position:sticky;top:0;z-index:5}
+.top-row{display:flex;align-items:center;gap:12px}
+.top-row h1{font-size:20px;margin:0;letter-spacing:-.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.burger{display:none;border:1px solid var(--line);background:var(--panel);border-radius:8px;width:38px;height:38px}
+.tabs{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+.tab{border:0;background:none;padding:9px 13px;border-bottom:2px solid transparent;color:var(--muted);white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--ink);border-bottom-color:var(--acc);font-weight:600}
+.tab.build{margin-left:auto}
+#view{padding:20px 24px 60px;flex:1}
+/* controls */
+.btn{border:1px solid var(--line);background:var(--panel);padding:8px 13px;border-radius:8px;white-space:nowrap}
+.btn:hover{border-color:#cfc8bd}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.toolbar .btn{min-height:38px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.inp,select.inp,textarea.inp{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 10px;width:100%;outline:none}
+.inp:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+textarea.inp{min-height:76px;resize:vertical}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .search{max-width:280px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:7px 12px}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+.grow{flex:1}
+.mut{color:var(--muted)}
+/* table */
+.tbl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--soft);cursor:pointer;user-select:none;white-space:nowrap;position:sticky;top:0}
+th:hover{color:var(--ink)}
+td{padding:10px 12px;border-bottom:1px solid #f0ece6;vertical-align:top;max-width:280px;overflow-wrap:break-word}
+td:first-child{min-width:170px;font-weight:600}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#fcfaf7}
+td.num,th.num{text-align:right;white-space:nowrap}
+tfoot td{background:var(--soft);font-weight:600;border-bottom:0}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tel{color:var(--acc);text-decoration:none;white-space:nowrap;font-weight:600}
+.chk{color:var(--ok);font-weight:700}
+.overdue{color:var(--bad);font-weight:600}
+.empty{background:var(--panel);border:1px dashed #d8d1c6;border-radius:var(--r);padding:44px 20px;text-align:center}
+.empty p{margin:0 0 14px;color:var(--muted)}
+/* kanban */
+.kan{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:stretch;min-height:calc(100vh - 210px);scrollbar-width:thin;scrollbar-color:#cfc8bd transparent}
+.kan::-webkit-scrollbar{height:8px}.kan::-webkit-scrollbar-thumb{background:#cfc8bd;border-radius:8px}
+.col{flex:0 0 272px;background:#ece8e1;border-radius:var(--r);padding:8px;min-height:120px;transition:background .15s}
+.col.over{background:#e3ddd2;outline:2px dashed var(--acc);outline-offset:-2px}
+.col-h{display:flex;align-items:center;gap:8px;padding:4px 6px 10px;font-weight:600}
+.col-h .cnt{color:var(--muted);font-weight:500}
+.col-h .sum{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.card{background:var(--panel);border-radius:8px;padding:10px 11px;margin-bottom:8px;box-shadow:0 1px 0 rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.03);cursor:grab}
+.card:active{cursor:grabbing}
+.card.drag{opacity:.4}
+.card b{display:block;margin-bottom:4px;overflow-wrap:anywhere}
+.card .meta{font-size:12.5px;color:var(--muted);display:grid;gap:2px}
+.col .add{width:100%;border:0;background:none;color:var(--muted);padding:7px;border-radius:7px;text-align:left}
+.col .add:hover{background:#e0dacf;color:var(--ink)}
+/* dashboard */
+.dash{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.box h3{margin:0 0 2px;font-size:15px;display:flex;align-items:center;gap:8px}
+.box h3 .btn{margin-left:auto}
+.big{font-size:28px;font-weight:700;letter-spacing:-.5px;margin:6px 0 2px}
+.bars{display:grid;gap:7px;margin-top:12px}
+.bar{display:grid;grid-template-columns:110px 1fr 32px;gap:8px;align-items:center;font-size:13px}
+.bar span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{height:8px;background:#f0ece6;border-radius:9px;overflow:hidden}
+.bar .fill{height:100%;border-radius:9px}
+.bar span:last-child{text-align:right;color:var(--muted)}
+.wide{grid-column:1/-1}
+.list{display:grid;gap:0}
+.li{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #f0ece6;cursor:pointer}
+.li:first-child{border-top:0}
+.li .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hint{font-size:13px;color:var(--muted);margin:4px 0 0}
+/* builder */
+.bld{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
+.blist{display:grid;gap:4px;margin:8px 0 10px}
+.bitem{border:1px solid transparent;background:none;text-align:left;padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;gap:8px}
+.bitem:hover{background:var(--soft)}
+.bitem.on{background:var(--acc-soft);border-color:#f5cdb3;font-weight:600}
+.bitem small{color:var(--muted);font-weight:400}
+.frow{display:grid;grid-template-columns:54px minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.4fr) 128px 36px;gap:8px;align-items:start;padding:10px 0;border-top:1px solid #f0ece6}
+.frow>*{min-width:0}
+.cbs{display:grid;gap:0}
+.cbs .cb{height:22px}
+.frow:first-of-type{border-top:0}
+.fhead{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-bottom:4px;border-top:0}
+.mv{display:flex;gap:2px}
+.mv button,.x{border:1px solid var(--line);background:var(--panel);border-radius:6px;width:26px;height:36px;padding:0;color:var(--muted)}
+.x{width:36px}
+.mv button:hover,.x:hover{color:var(--ink);border-color:#cfc8bd}
+.x:hover{color:var(--bad)}
+.cb{display:flex;align-items:center;gap:6px;height:36px;white-space:nowrap;font-size:13px;cursor:pointer}
+.cb input{accent-color:var(--acc)}
+.colors{display:flex;gap:6px;margin-top:6px}
+.colors button{width:24px;height:24px;border-radius:6px;border:2px solid transparent}
+.colors button.on{border-color:var(--ink)}
+label.lb{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+label.lb:first-child{margin-top:0}
+.req{color:var(--acc)}
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(29,28,26,.45);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:50;overflow:auto}
+#modal.on{display:flex}
+.dlg{background:var(--panel);border-radius:14px;width:100%;max-width:620px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dlg-h h2{margin:0;font-size:17px;flex:1;overflow-wrap:anywhere}
+.dlg-b{padding:16px 20px}
+.dlg-f{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--line);background:var(--soft);border-radius:0 0 14px 14px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+.form .full{grid-column:1/-1}
+.cbx{display:flex;align-items:center;gap:8px;height:38px}
+.cbx input{width:18px;height:18px;accent-color:var(--acc)}
+.sec{margin-top:20px}
+.sec h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.note{background:var(--soft);border-radius:8px;padding:8px 10px;margin-bottom:6px;white-space:pre-wrap;overflow-wrap:anywhere}
+.note small{display:block;color:var(--muted);font-size:11.5px}
+.tpls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.tpl{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px;text-align:left}
+.tpl:hover{border-color:#cfc8bd}
+.tpl.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+.tpl b{display:block;margin-bottom:3px}
+.tpl span{font-size:12.5px;color:var(--muted)}
+.err{color:var(--bad);font-size:13px;margin-top:8px;min-height:1px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:9px;opacity:0;transition:.2s;pointer-events:none;z-index:60}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* mobile */
+@media (max-width:860px){
+  #side{position:fixed;left:0;top:0;bottom:0;z-index:40;transform:translateX(-100%);transition:transform .2s}
+  #side.open{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+  .burger{display:block}
+  #top{padding:10px 14px 0}
+  #view{padding:14px 14px calc(60px + env(safe-area-inset-bottom))}
+  .bld{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr 1fr;padding:12px 0}
+  .frow .mv{order:6}
+  .frow .cbs{grid-column:1/-1;display:flex;gap:16px}
+  .frow .x{order:7;justify-self:end}
+  .kan{min-height:calc(100vh - 230px)}
+  .fhead{display:none}
+  .form{grid-template-columns:1fr}
+  .tpls{grid-template-columns:1fr}
+  .toolbar .search{max-width:none;flex:1 1 100%}
+  .col{flex-basis:84vw}
+  #modal{padding:0}
+  .dlg{border-radius:0;min-height:100%;max-width:none}
+  .dlg-f{border-radius:0;position:sticky;bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+#lock.on{display:flex}
+#lock .lk{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 24px;width:100%;max-width:340px}
+#lock h2{margin:0 0 6px;font-size:19px}
+#lock .pin{font-size:24px;letter-spacing:.4em;text-align:center;margin:14px 0 8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="logo"><i></i>BizBuilder</div>
+    <div class="side-h">Мои приложения</div>
+    <div class="apps" id="apps"></div>
+    <div class="side-f">
+      <button class="sbtn acc" onclick="newAppDlg()">+ Новое приложение</button>
+      <button class="sbtn" onclick="exportAll()">Скачать резервную копию</button>
+      <button class="sbtn" onclick="document.getElementById('imp').click()">Загрузить из копии</button>
+      <button class="sbtn" onclick="lockNow()">Заблокировать</button>
+      <button class="sbtn" onclick="changePin()">Сменить PIN</button>
+      <input type="file" id="imp" accept=".json,application/json" hidden onchange="importAll(this)">
+    </div>
+  </aside>
+  <main>
+    <header id="top"></header>
+    <section id="view"></section>
+  </main>
+</div>
+<div id="modal" onmousedown="if(event.target===this)closeDlg()"></div>
+<div id="lock"><div class="lk"><h2 id="lkT"></h2><p class="hint" id="lkH"></p>
+<input class="inp pin" id="lkP" type="password" inputmode="numeric" autocomplete="off" maxlength="12" onkeydown="if(event.key==='Enter')lockGo()">
+<div class="err" id="lkE"></div><button class="btn pri" style="width:100%;margin-top:6px" onclick="lockGo()">Войти</button></div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const LS='bizbuilder.v1';
+const PAL=['#e8641b','#2f8f5b','#2b6cb0','#b7791f','#8a4fbf','#c8402f','#0f8a8a','#6b6b6b'];
+const TYPES={text:'Текст',longtext:'Длинный текст',number:'Число',money:'Деньги, ₽',date:'Дата',select:'Список / статус',phone:'Телефон',email:'Email',url:'Ссылка (сайт)',checkbox:'Флажок (да/нет)',link:'Связь с таблицей'};
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NB='\u00a0';
+const pad=n=>String(n).padStart(2,'0');
+const ymd=t=>t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());
+const today=()=>ymd(new Date());
+const dOff=n=>{const t=new Date();t.setDate(t.getDate()+n);return ymd(t)};
+
+/* ---------- templates ---------- */
+function F(name,type,extra){return Object.assign({id:uid(),name,type,options:[],link:null,req:false,hide:false},extra||{})}
+function T(name,fields,view){return {id:uid(),name,fields,view:Object.assign({type:'table',groupBy:null,sort:null,dir:1},view||{})}}
+function R(ent,vals){const v={};ent.fields.forEach((f,i)=>{if(vals[i]!==undefined&&vals[i]!==null&&vals[i]!=='')v[f.id]=vals[i]});return {id:uid(),v,c:Date.now(),notes:[]}}
+function mkApp(name,color,ents){const a={id:uid(),name,color,entities:ents,records:{}};ents.forEach(e=>a.records[e.id]=[]);return a}
+
+const TEMPLATES={
+  crm:{name:'CRM — продажи',desc:'Клиенты, воронка сделок, задачи менеджеров',make(){
+    const cl=T('Клиенты',[F('Название','text',{req:true}),F('Контактное лицо','text'),F('Телефон','phone'),F('Email','email'),F('Источник','select',{options:['Авито','Сайт','Рекомендация','Холодный звонок','Соцсети']}),F('Статус','select',{options:['Новый','В работе','Постоянный','Неактивный']}),F('Заметка','longtext',{hide:true})]);
+    const dl=T('Сделки',[F('Сделка','text',{req:true}),F('Клиент','link',{link:cl.id}),F('Сумма','money'),F('Этап','select',{options:['Новая заявка','Переговоры','КП отправлено','Счёт выставлен','Успешно','Отказ']}),F('Дата закрытия','date'),F('Ответственный','text')],{type:'kanban'});
+    const tk=T('Задачи',[F('Задача','text',{req:true}),F('Сделка','link',{link:dl.id}),F('Срок','date'),F('Приоритет','select',{options:['Высокий','Средний','Низкий']}),F('Выполнено','checkbox')]);
+    const a=mkApp('CRM — продажи',PAL[0],[cl,dl,tk]);
+    const c1=R(cl,['ООО «Ромашка» (пример)','Иван Петров','+7 900 123-45-67','ivan@example.ru','Сайт','В работе']);
+    const c2=R(cl,['ИП Смирнова (пример)','Анна Смирнова','+7 911 222-33-44','','Авито','Новый']);
+    a.records[cl.id].push(c1,c2);
+    const d1=R(dl,['Поставка оборудования',c1.id,180000,'КП отправлено',dOff(10),'Мария']);
+    const d2=R(dl,['Разовый заказ',c2.id,25000,'Новая заявка',dOff(5),'Мария']);
+    a.records[dl.id].push(d1,d2);
+    a.records[tk.id].push(R(tk,['Перезвонить по КП',d1.id,dOff(1),'Высокий',false]),R(tk,['Уточнить объём заказа',d2.id,dOff(-1),'Средний',false]));
+    return a}},
+  booking:{name:'Запись клиентов',desc:'Салон, клиника, студия: услуги, мастера, записи',make(){
+    const sv=T('Услуги',[F('Услуга','text',{req:true}),F('Цена','money'),F('Длительность, мин','number')]);
+    const ms=T('Мастера',[F('Имя','text',{req:true}),F('Телефон','phone'),F('Специализация','text')]);
+    const cl=T('Клиенты',[F('Имя','text',{req:true}),F('Телефон','phone'),F('Дата рождения','date'),F('Комментарий','longtext',{hide:true})]);
+    const bk=T('Записи',[F('Запись','text',{req:true}),F('Клиент','link',{link:cl.id}),F('Услуга','link',{link:sv.id}),F('Мастер','link',{link:ms.id}),F('Дата','date'),F('Время','text'),F('Статус','select',{options:['Записан','Подтвердил','Пришёл','Не пришёл','Отменил']}),F('Оплачено','money')],{type:'kanban'});
+    const a=mkApp('Запись клиентов',PAL[4],[bk,cl,sv,ms]);
+    const s1=R(sv,['Стрижка (пример)',1500,60]);a.records[sv.id].push(s1);
+    const m1=R(ms,['Ольга (пример)','+7 900 000-00-01','Парикмахер']);a.records[ms.id].push(m1);
+    const k1=R(cl,['Елена (пример)','+7 900 000-00-02']);a.records[cl.id].push(k1);
+    a.records[bk.id].push(R(bk,['Елена — стрижка',k1.id,s1.id,m1.id,dOff(1),'12:00','Записан']));
+    return a}},
+  stock:{name:'Склад и заказы',desc:'Товары, остатки, поставщики, заказы покупателей',make(){
+    const sp=T('Поставщики',[F('Поставщик','text',{req:true}),F('Телефон','phone'),F('Email','email'),F('Сайт','url')]);
+    const pr=T('Товары',[F('Товар','text',{req:true}),F('Артикул','text'),F('Категория','select',{options:['Основное','Расходники','Прочее']}),F('Остаток, шт','number'),F('Цена','money'),F('Поставщик','link',{link:sp.id})]);
+    const or=T('Заказы',[F('Заказ','text',{req:true}),F('Покупатель','text'),F('Телефон','phone'),F('Товар','link',{link:pr.id}),F('Кол-во','number'),F('Сумма','money'),F('Статус','select',{options:['Новый','Собран','Отправлен','Доставлен','Возврат']}),F('Дата','date')],{type:'kanban'});
+    const a=mkApp('Склад и заказы',PAL[2],[or,pr,sp]);
+    const s1=R(sp,['ООО «Поставка» (пример)','+7 495 000-00-00']);a.records[sp.id].push(s1);
+    const p1=R(pr,['Товар А (пример)','A-001','Основное',42,990,s1.id]);a.records[pr.id].push(p1);
+    a.records[or.id].push(R(or,['Заказ №1','Покупатель (пример)','+7 900 000-00-03',p1.id,2,1980,'Новый',today()]));
+    return a}},
+  service:{name:'Заявки и сервис',desc:'Входящие заявки, выезды, ремонт, исполнители',make(){
+    const em=T('Исполнители',[F('Имя','text',{req:true}),F('Телефон','phone'),F('Роль','select',{options:['Мастер','Менеджер','Курьер']})]);
+    const rq=T('Заявки',[F('Заявка','text',{req:true}),F('Клиент','text'),F('Телефон','phone'),F('Адрес','text'),F('Исполнитель','link',{link:em.id}),F('Статус','select',{options:['Новая','Назначена','В работе','Выполнена','Отменена']}),F('Срок','date'),F('Стоимость','money'),F('Описание','longtext',{hide:true})],{type:'kanban'});
+    const a=mkApp('Заявки и сервис',PAL[1],[rq,em]);
+    const e1=R(em,['Сергей (пример)','+7 900 000-00-04','Мастер']);a.records[em.id].push(e1);
+    a.records[rq.id].push(R(rq,['Ремонт (пример)','Клиент','+7 900 000-00-05','ул. Ленина, 1',e1.id,'Назначена',dOff(2),3500]));
+    return a}},
+  blank:{name:'Пустое приложение',desc:'Начните с нуля и соберите свои таблицы',make(){
+    const t=T('Записи',[F('Название','text',{req:true}),F('Статус','select',{options:['Новое','В работе','Готово']}),F('Дата','date')]);
+    return mkApp('Новое приложение',PAL[5],[t])}}
+};
+
+/* ---------- storage ---------- */
+let db=load();
+let q='', bEnt=null, dragId=null;
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(LS));if(d&&Array.isArray(d.apps)&&d.apps.length)return d}catch(e){}
+  const a=TEMPLATES.crm.make();return {apps:[a],cur:{app:a.id,ent:'dash'}};
+}
+function save(){try{localStorage.setItem(LS,JSON.stringify(db))}catch(e){toast('Не удалось сохранить: '+e.message)}}
+const A=()=>db.apps.find(a=>a.id===db.cur.app)||db.apps[0];
+const E=(app,id)=>app.entities.find(e=>e.id===id);
+const recs=(app,eid)=>app.records[eid]||(app.records[eid]=[]);
+function title(app,ent,r){const f=ent.fields[0];if(!f)return 'Запись';const v=r.v[f.id];if(v===undefined||v==='')return 'Без названия';return f.type==='link'?linkTitle(app,f,v):String(v)}
+function linkTitle(app,f,id){const t=E(app,f.link);if(!t)return '';const r=recs(app,t.id).find(x=>x.id===id);return r?title(app,t,r):''}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),2200)}
+
+/* ---------- formatting ---------- */
+const money=n=>Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2}).replace(/\s/g,NB)+NB+'₽';
+const fdate=s=>{if(!s)return '';const[y,m,d]=s.split('-');return d+'.'+m+'.'+y};
+function optColor(f,v){const i=f.options.indexOf(v);return i<0?'#8a857c':PAL[i%PAL.length]}
+function pill(f,v){const c=optColor(f,v);return `<span class="pill" style="background:${c}1f;color:${c}">${esc(v)}</span>`}
+function doneOf(ent,r){const cb=ent.fields.find(f=>f.type==='checkbox');return cb?!!r.v[cb.id]:false}
+function fmt(app,ent,f,r){
+  const v=r.v[f.id];
+  if(v===undefined||v===null||v===''||(f.type==='checkbox'&&!v))return f.type==='checkbox'?'':'<span class="mut">—</span>';
+  switch(f.type){
+    case 'money':return money(v);
+    case 'number':return Number(v).toLocaleString('ru-RU').replace(/\s/g,NB);
+    case 'date':{const od=v<today()&&!doneOf(ent,r)&&ent.fields.some(x=>x.type==='checkbox');return `<span class="${od?'overdue':''}">${fdate(v)}</span>`}
+    case 'select':return pill(f,v);
+    case 'phone':return `<a class="tel" href="tel:${esc(String(v).replace(/[^\d+]/g,''))}" onclick="event.stopPropagation()">${esc(v)}</a>`;
+    case 'email':return `<a href="mailto:${esc(v)}" onclick="event.stopPropagation()">${esc(v)}</a>`;
+    case 'url':{const u=/^https?:/i.test(v)?v:'https://'+v;return `<a href="${esc(u)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(v)}</a>`}
+    case 'checkbox':return '<span class="chk">✓</span>';
+    case 'link':return esc(linkTitle(app,f,v))||'<span class="mut">—</span>';
+    case 'longtext':{const s=String(v);return esc(s.length>90?s.slice(0,90)+'…':s)}
+    default:return esc(v);
+  }
+}
+
+/* ---------- navigation ---------- */
+function go(appId,ent){db.cur={app:appId,ent:ent||'dash'};q='';save();closeSide();render();window.scrollTo(0,0)}
+function tab(ent){go(A().id,ent)}
+function closeSide(){document.getElementById('side').classList.remove('open')}
+
+function render(){
+  const app=A();db.cur.app=app.id;
+  document.getElementById('apps').innerHTML=db.apps.map(a=>`<button class="appbtn ${a.id===app.id?'on':''}" onclick="go('${a.id}')"><i class="dot" style="background:${a.color}"></i><span>${esc(a.name)}</span></button>`).join('');
+  let cur=db.cur.ent;
+  if(cur!=='dash'&&cur!=='build'&&!E(app,cur))cur=db.cur.ent='dash';
+  document.getElementById('top').innerHTML=`<div class="top-row"><button class="burger" onclick="document.getElementById('side').classList.toggle('open')" aria-label="Меню">☰</button><i class="dot" style="background:${app.color};width:12px;height:12px"></i><h1>${esc(app.name)}</h1></div>
+  <nav class="tabs"><button class="tab ${cur==='dash'?'on':''}" onclick="tab('dash')">Обзор</button>${app.entities.map(e=>`<button class="tab ${cur===e.id?'on':''}" onclick="tab('${e.id}')">${esc(e.name)} <span class="mut">${recs(app,e.id).length}</span></button>`).join('')}<button class="tab build ${cur==='build'?'on':''}" onclick="tab('build')">⚙ Конструктор</button></nav>`;
+  const v=document.getElementById('view');
+  if(cur==='dash')v.innerHTML=dashHTML(app);
+  else if(cur==='build')v.innerHTML=buildHTML(app);
+  else{v.innerHTML=entityHTML(app,E(app,cur));renderList()}
+  document.title=app.name+' — BizBuilder';
+}
+
+/* ---------- entity screen ---------- */
+function entityHTML(app,ent){
+  const sel=ent.fields.filter(f=>f.type==='select');
+  if(ent.view.type==='kanban'&&!sel.length)ent.view.type='table';
+  const gb=sel.find(f=>f.id===ent.view.groupBy)||sel[0];
+  return `<div class="toolbar">
+    <input class="inp search" id="q" placeholder="Поиск…" value="${esc(q)}" oninput="q=this.value;renderList()">
+    <div class="seg"><button class="${ent.view.type==='table'?'on':''}" onclick="setView('table')">Таблица</button><button class="${ent.view.type==='kanban'?'on':''}" ${sel.length?'':'disabled title="Добавьте поле типа «Список» в конструкторе"'} onclick="setView('kanban')">Канбан</button></div>
+    ${ent.view.type==='kanban'&&sel.length>1?`<select class="inp" style="width:auto" onchange="setGroup(this.value)">${sel.map(f=>`<option value="${f.id}" ${f===gb?'selected':''}>по полю «${esc(f.name)}»</option>`).join('')}</select>`:''}
+    <span class="grow"></span>
+    <button class="btn sm" onclick="exportCSV('${ent.id}')">Excel / CSV</button>
+    <button class="btn pri" onclick="openRec('${ent.id}')">+ Добавить</button>
+  </div><div id="list"></div>`;
+}
+function setView(t){const app=A(),ent=E(app,db.cur.ent);ent.view.type=t;save();render()}
+function setGroup(fid){const app=A(),ent=E(app,db.cur.ent);ent.view.groupBy=fid;save();render()}
+function filtered(app,ent){
+  let rows=recs(app,ent.id).slice();
+  const s=q.trim().toLowerCase();
+  if(s)rows=rows.filter(r=>ent.fields.some(f=>{const v=r.v[f.id];if(v==null)return false;const t=f.type==='link'?linkTitle(app,f,v):String(v);return t.toLowerCase().includes(s)}));
+  const sf=ent.fields.find(f=>f.id===ent.view.sort);
+  if(sf){const d=ent.view.dir;rows.sort((a,b)=>{let x=a.v[sf.id],y=b.v[sf.id];if(sf.type==='link'){x=linkTitle(app,sf,x);y=linkTitle(app,sf,y)}if(x==null||x==='')return 1;if(y==null||y==='')return -1;if(sf.type==='number'||sf.type==='money')return (x-y)*d;if(sf.type==='select')return (sf.options.indexOf(x)-sf.options.indexOf(y))*d;return String(x).localeCompare(String(y),'ru')*d})}
+  else rows.sort((a,b)=>b.c-a.c);
+  return rows;
+}
+function sortBy(fid){const app=A(),ent=E(app,db.cur.ent);if(ent.view.sort===fid){if(ent.view.dir===1)ent.view.dir=-1;else{ent.view.sort=null;ent.view.dir=1}}else{ent.view.sort=fid;ent.view.dir=1}save();renderList()}
+function renderList(){
+  const app=A(),ent=E(app,db.cur.ent),box=document.getElementById('list');if(!ent||!box)return;
+  const rows=filtered(app,ent);
+  if(!recs(app,ent.id).length){box.innerHTML=`<div class="empty"><p>В таблице «${esc(ent.name)}» пока нет записей.</p><button class="btn pri" onclick="openRec('${ent.id}')">+ Добавить первую</button></div>`;return}
+  if(ent.view.type==='kanban'){box.innerHTML=kanbanHTML(app,ent,rows);return}
+  const cols=ent.fields.filter(f=>!f.hide);
+  const isNum=f=>f.type==='money'||f.type==='number';
+  const sums=cols.map(f=>f.type==='money'?rows.reduce((s,r)=>s+(Number(r.v[f.id])||0),0):null);
+  box.innerHTML=`<div class="tbl-wrap"><table><thead><tr>${cols.map(f=>`<th class="${isNum(f)?'num':''}" onclick="sortBy('${f.id}')">${esc(f.name)}${ent.view.sort===f.id?(ent.view.dir===1?' ↑':' ↓'):''}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r=>`<tr onclick="openRec('${ent.id}','${r.id}')">${cols.map(f=>`<td class="${isNum(f)?'num':''}">${fmt(app,ent,f,r)}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}" class="mut">Ничего не найдено</td></tr>`}</tbody>
+  ${sums.some(x=>x!==null)?`<tfoot><tr>${cols.map((f,i)=>`<td class="${isNum(f)?'num':''}">${i===0?'Итого: '+rows.length:(sums[i]!==null?money(sums[i]):'')}</td>`).join('')}</tr></tfoot>`:''}</table></div>
+  ${sums.some(x=>x!==null)?'':`<p class="hint">Записей: ${rows.length}</p>`}`;
+}
+function kanbanHTML(app,ent,rows){
+  const sel=ent.fields.filter(f=>f.type==='select');const g=sel.find(f=>f.id===ent.view.groupBy)||sel[0];
+  const mf=ent.fields.find(f=>f.type==='money');
+  const meta=ent.fields.filter(f=>f!==ent.fields[0]&&f!==g&&!f.hide&&f.type!=='longtext').slice(0,3);
+  const groups=g.options.map((o,i)=>({key:o,i}));
+  if(rows.some(r=>!g.options.includes(r.v[g.id])))groups.push({key:'',i:-1});
+  return `<div class="kan">${groups.map(gr=>{
+    const items=rows.filter(r=>gr.i<0?!g.options.includes(r.v[g.id]):r.v[g.id]===gr.key);
+    const sum=mf?items.reduce((s,r)=>s+(Number(r.v[mf.id])||0),0):0;
+    return `<div class="col" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropTo(event,${gr.i})">
+      <div class="col-h">${gr.i<0?'<span class="mut">Без статуса</span>':pill(g,gr.key)}<span class="cnt">${items.length}</span>${mf&&sum?`<span class="sum">${money(sum)}</span>`:''}</div>
+      ${items.map(r=>`<div class="card" draggable="true" ondragstart="dragId='${r.id}';this.classList.add('drag')" ondragend="this.classList.remove('drag')" onclick="openRec('${ent.id}','${r.id}')"><b>${esc(title(app,ent,r))}</b><div class="meta">${meta.map(f=>{const h=fmt(app,ent,f,r);return h&&!h.includes('class="mut"')?`<span>${h}</span>`:''}).join('')}</div></div>`).join('')}
+      ${gr.i>=0?`<button class="add" onclick="openRec('${ent.id}',null,{'${g.id}':${gr.i}})">+ Добавить</button>`:''}
+    </div>`}).join('')}</div>`;
+}
+function dropTo(ev,i){
+  ev.preventDefault();const app=A(),ent=E(app,db.cur.ent);const sel=ent.fields.filter(f=>f.type==='select');const g=sel.find(f=>f.id===ent.view.groupBy)||sel[0];
+  const r=recs(app,ent.id).find(x=>x.id===dragId);dragId=null;if(!r)return;
+  if(i<0)delete r.v[g.id];else r.v[g.id]=g.options[i];save();renderList();
+}
+
+/* ---------- record dialog ---------- */
+function inputHTML(app,f,v){
+  const id='f_'+f.id;v=v??'';
+  switch(f.type){
+    case 'longtext':return `<textarea class="inp" id="${id}">${esc(v)}</textarea>`;
+    case 'number':case 'money':return `<input class="inp" id="${id}" type="number" step="any" inputmode="decimal" value="${esc(v)}">`;
+    case 'date':return `<input class="inp" id="${id}" type="date" value="${esc(v)}">`;
+    case 'phone':return `<input class="inp" id="${id}" type="tel" placeholder="+7 900 000-00-00" value="${esc(v)}">`;
+    case 'email':return `<input class="inp" id="${id}" type="email" value="${esc(v)}">`;
+    case 'url':return `<input class="inp" id="${id}" type="text" placeholder="site.ru" value="${esc(v)}">`;
+    case 'checkbox':return `<label class="cbx"><input id="${id}" type="checkbox" ${v?'checked':''}> Да</label>`;
+    case 'select':{const opts=f.options.slice();if(v&&!opts.includes(v))opts.push(v);return `<select class="inp" id="${id}"><option value="">—</option>${opts.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`}
+    case 'link':{const t=E(app,f.link);if(!t)return '<p class="mut">Связанная таблица не выбрана — настройте поле в конструкторе</p>';return `<select class="inp" id="${id}"><option value="">—</option>${recs(app,t.id).map(r=>`<option value="${r.id}" ${r.id===v?'selected':''}>${esc(title(app,t,r))}</option>`).join('')}</select>`}
+    default:return `<input class="inp" id="${id}" type="text" value="${esc(v)}">`;
+  }
+}
+function openRec(eid,rid,prefill){
+  const app=A(),ent=E(app,eid);const r=rid?recs(app,eid).find(x=>x.id===rid):null;
+  const vals=Object.assign({},r?r.v:{});
+  if(prefill)for(const k in prefill){const f=ent.fields.find(x=>x.id===k);vals[k]=(f&&f.type==='select'&&typeof prefill[k]==='number')?f.options[prefill[k]]:prefill[k]}
+  const form=ent.fields.map(f=>`<div class="${f.type==='longtext'||f===ent.fields[0]?'full':''}"><label class="lb" for="f_${f.id}">${esc(f.name)}${f.req?' <span class="req">*</span>':''}</label>${inputHTML(app,f,vals[f.id])}</div>`).join('');
+  let back='';
+  if(r){
+    app.entities.forEach(e2=>e2.fields.filter(f2=>f2.type==='link'&&f2.link===ent.id).forEach(f2=>{
+      const items=recs(app,e2.id).filter(x=>x.v[f2.id]===r.id);
+      back+=`<div class="sec"><h4>${esc(e2.name)} · ${items.length}</h4><div class="list">${items.map(x=>`<div class="li" onclick="openRec('${e2.id}','${x.id}')"><span class="t">${esc(title(app,e2,x))}</span>${(()=>{const s=e2.fields.find(ff=>ff.type==='select');return s&&x.v[s.id]?pill(s,x.v[s.id]):''})()}</div>`).join('')}</div><button class="btn sm" style="margin-top:6px" onclick="openRec('${e2.id}',null,{'${f2.id}':'${r.id}'})">+ ${esc(e2.name)}</button></div>`;
+    }));
+    back+=`<div class="sec"><h4>Комментарии и история</h4><div id="notes">${(r.notes||[]).map(n=>`<div class="note"><small>${new Date(n.t).toLocaleString('ru-RU')}</small>${esc(n.text)}</div>`).join('')}</div><textarea class="inp" id="nt" placeholder="Например: созвонились, просит скидку 5%"></textarea><button class="btn sm" style="margin-top:6px" onclick="addNote('${eid}','${r.id}')">Добавить комментарий</button></div>`;
+  }
+  showDlg(`<div class="dlg"><div class="dlg-h"><h2>${r?esc(title(app,ent,r)):'Новая запись · '+esc(ent.name)}</h2><button class="btn sm" onclick="closeDlg()">✕</button></div>
+  <div class="dlg-b"><div class="form">${form}</div><div class="err" id="err"></div>${back}</div>
+  <div class="dlg-f">${r?`<button class="btn danger" onclick="delRec('${eid}','${r.id}')">Удалить</button>`:''}<span class="grow"></span><button class="btn" onclick="closeDlg()">Отмена</button><button class="btn pri" onclick="saveRec('${eid}','${r?r.id:''}')">Сохранить</button></div></div>`);
+  const first=document.getElementById('f_'+(ent.fields[0]||{}).id);if(first&&!r&&matchMedia('(min-width:861px)').matches)first.focus();
+}
+function readForm(ent){
+  const v={};
+  for(const f of ent.fields){const el=document.getElementById('f_'+f.id);if(!el)continue;
+    let x=f.type==='checkbox'?el.checked:el.value;
+    if((f.type==='number'||f.type==='money')&&x!=='')x=Number(x);
+    if(typeof x==='string')x=x.trim();
+    if(x!==''&&x!==false)v[f.id]=x;}
+  return v;
+}
+function saveRec(eid,rid){
+  const app=A(),ent=E(app,eid);const v=readForm(ent);
+  const miss=ent.fields.filter(f=>f.req&&(v[f.id]===undefined)).map(f=>f.name);
+  if(miss.length){document.getElementById('err').textContent='Заполните: '+miss.join(', ');return}
+  if(rid){const r=recs(app,eid).find(x=>x.id===rid);r.v=v}else recs(app,eid).push({id:uid(),v,c:Date.now(),notes:[]});
+  save();closeDlg();render();toast('Сохранено');
+}
+function delRec(eid,rid){
+  if(!confirm('Удалить запись? Это действие нельзя отменить.'))return;
+  const app=A();app.records[eid]=recs(app,eid).filter(x=>x.id!==rid);
+  app.entities.forEach(e2=>e2.fields.filter(f=>f.type==='link'&&f.link===eid).forEach(f=>recs(app,e2.id).forEach(x=>{if(x.v[f.id]===rid)delete x.v[f.id]})));
+  save();closeDlg();render();toast('Удалено');
+}
+function addNote(eid,rid){
+  const t=document.getElementById('nt').value.trim();if(!t)return;
+  const r=recs(A(),eid).find(x=>x.id===rid);(r.notes=r.notes||[]).push({t:Date.now(),text:t});save();
+  document.getElementById('notes').insertAdjacentHTML('beforeend',`<div class="note"><small>${new Date().toLocaleString('ru-RU')}</small>${esc(t)}</div>`);
+  document.getElementById('nt').value='';
+}
+function showDlg(h){const m=document.getElementById('modal');m.innerHTML=h;m.classList.add('on');m.scrollTop=0;document.body.style.overflow='hidden'}
+function closeDlg(){const m=document.getElementById('modal');m.classList.remove('on');m.innerHTML='';document.body.style.overflow=''}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDlg()});
+
+/* ---------- dashboard ---------- */
+function dashHTML(app){
+  const t=today(),soon=dOff(7),up=[];
+  app.entities.forEach(e=>{const df=e.fields.find(f=>f.type==='date');if(!df)return;
+    recs(app,e.id).forEach(r=>{const d=r.v[df.id];if(d&&d<=soon&&!doneOf(e,r)){
+      const sf=e.fields.find(f=>f.type==='select');const st=sf?r.v[sf.id]:'';
+      if(sf&&st&&sf.options.length>1&&sf.options.indexOf(st)>=sf.options.length-2&&!e.fields.some(f=>f.type==='checkbox'))return; // финальные этапы
+      up.push({e,r,d,df})}})});
+  up.sort((a,b)=>a.d.localeCompare(b.d));
+  const boxes=app.entities.map(e=>{
+    const rs=recs(app,e.id);const mf=e.fields.find(f=>f.type==='money');const sf=e.fields.find(f=>f.type==='select');
+    let h=`<div class="box"><h3>${esc(e.name)}<button class="btn sm" onclick="tab('${e.id}')">Открыть</button></h3><div class="big">${rs.length}</div><div class="mut">записей${mf?` · ${esc(mf.name).toLowerCase()}: <b style="color:var(--ink)">${money(rs.reduce((s,r)=>s+(Number(r.v[mf.id])||0),0))}</b>`:''}</div>`;
+    if(sf&&rs.length){const mx=Math.max(1,...sf.options.map(o=>rs.filter(r=>r.v[sf.id]===o).length));
+      h+=`<div class="bars">${sf.options.map((o,i)=>{const n=rs.filter(r=>r.v[sf.id]===o).length;return `<div class="bar"><span title="${esc(o)}">${esc(o)}</span><div class="track"><div class="fill" style="width:${n/mx*100}%;background:${PAL[i%PAL.length]}"></div></div><span>${n}</span></div>`}).join('')}</div>`}
+    return h+'</div>';
+  }).join('');
+  return `<div class="dash">
+   <div class="box wide"><h3>Сроки на ближайшие 7 дней</h3>${up.length?`<div class="list" style="margin-top:8px">${up.slice(0,12).map(x=>`<div class="li" onclick="openRec('${x.e.id}','${x.r.id}')"><span class="${x.d<t?'overdue':''}" style="width:92px;flex:none">${x.d<t?'просрочено':fdate(x.d)}</span><span class="t">${esc(title(app,x.e,x.r))}</span><span class="mut" style="font-size:12px">${esc(x.e.name)}</span></div>`).join('')}</div>`:'<p class="hint">Ближайших сроков нет.</p>'}</div>
+   ${boxes}</div>`;
+}
+
+/* ---------- builder ---------- */
+function buildHTML(app){
+  if(!bEnt||!E(app,bEnt))bEnt=(app.entities[0]||{}).id;
+  const ent=E(app,bEnt);
+  return `<div class="bld">
+  <div class="box">
+    <label class="lb">Название приложения</label><input class="inp" value="${esc(app.name)}" onchange="setApp('name',this.value)">
+    <label class="lb">Цвет</label><div class="colors">${PAL.map(c=>`<button class="${c===app.color?'on':''}" style="background:${c}" onclick="setApp('color','${c}')" aria-label="цвет"></button>`).join('')}</div>
+    <label class="lb">Таблицы (разделы)</label>
+    <div class="blist">${app.entities.map(e=>`<button class="bitem ${e.id===bEnt?'on':''}" onclick="bEnt='${e.id}';render()"><span>${esc(e.name)}</span><small>${e.fields.length} пол.</small></button>`).join('')}</div>
+    <button class="btn" style="width:100%" onclick="addEnt()">+ Новая таблица</button>
+    <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+    <button class="btn danger sm" onclick="delApp()">Удалить приложение</button>
+  </div>
+  ${ent?`<div class="box">
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px"><label class="lb">Название таблицы</label><input class="inp" value="${esc(ent.name)}" onchange="setEnt('name',this.value)"></div>
+      <button class="btn" onclick="moveEnt(-1)" title="Левее во вкладках">←</button><button class="btn" onclick="moveEnt(1)" title="Правее во вкладках">→</button>
+      <button class="btn danger" onclick="delEnt()">Удалить таблицу</button>
+    </div>
+    <label class="lb" style="margin-top:18px">Поля · первое поле — название записи</label>
+    <div class="frow fhead"><span></span><span>Название поля</span><span>Тип</span><span>Варианты / связь</span><span></span><span></span></div>
+    ${ent.fields.map((f,i)=>`<div class="frow">
+      <div class="mv"><button onclick="moveField('${f.id}',-1)" ${i?'':'disabled'} aria-label="выше">↑</button><button onclick="moveField('${f.id}',1)" ${i<ent.fields.length-1?'':'disabled'} aria-label="ниже">↓</button></div>
+      <input class="inp" value="${esc(f.name)}" onchange="setField('${f.id}','name',this.value)">
+      <select class="inp" onchange="setField('${f.id}','type',this.value)">${Object.entries(TYPES).map(([k,n])=>`<option value="${k}" ${k===f.type?'selected':''}>${n}</option>`).join('')}</select>
+      <div>${f.type==='select'?`<textarea class="inp" style="min-height:60px;line-height:1.35" rows="3" placeholder="Варианты через запятую" onchange="setField('${f.id}','options',this.value)">${esc(f.options.join(', '))}</textarea>`:f.type==='link'?`<select class="inp" onchange="setField('${f.id}','link',this.value)"><option value="">— выберите таблицу —</option>${app.entities.filter(e=>e.id!==ent.id).map(e=>`<option value="${e.id}" ${e.id===f.link?'selected':''}>${esc(e.name)}</option>`).join('')}</select>`:''}</div>
+      <div class="cbs"><label class="cb"><input type="checkbox" ${f.req?'checked':''} onchange="setField('${f.id}','req',this.checked)"> Обязательное</label>
+      <label class="cb"><input type="checkbox" ${f.hide?'':'checked'} onchange="setField('${f.id}','hide',!this.checked)"> В таблице</label></div>
+      <button class="x" onclick="delField('${f.id}')" aria-label="удалить поле">✕</button>
+    </div>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn pri" onclick="addField()">+ Поле</button><button class="btn" onclick="tab('${ent.id}')">Открыть таблицу →</button></div>
+    <p class="hint">Изменения сохраняются автоматически. «Список / статус» включает канбан-доску, «Связь с таблицей» связывает записи (например, сделку с клиентом).</p>
+  </div>`:'<div class="box"><p class="mut">Добавьте первую таблицу.</p></div>'}
+  </div>`;
+}
+function setApp(k,v){const app=A();if(k==='name'){v=v.trim();if(!v)return render()}app[k]=v;save();render()}
+function setEnt(k,v){const ent=E(A(),bEnt);v=v.trim();if(!v)return render();ent[k]=v;save();render()}
+function setField(fid,k,v){
+  const app=A(),ent=E(app,bEnt),f=ent.fields.find(x=>x.id===fid);
+  if(k==='name'){v=v.trim();if(!v)return render()}
+  if(k==='options')v=[...new Set(v.split(/[,\n]/).map(s=>s.trim()).filter(Boolean))];
+  if(k==='type'){
+    if(v==='select'&&!f.options.length)f.options=['Вариант 1','Вариант 2'];
+    if(v==='link'){const other=app.entities.find(e=>e.id!==ent.id);f.link=other?other.id:null;recs(app,ent.id).forEach(r=>delete r.v[f.id])}
+    if(f.type==='link'||v==='checkbox')recs(app,ent.id).forEach(r=>delete r.v[f.id]);
+    if(v==='number'||v==='money')recs(app,ent.id).forEach(r=>{const n=Number(String(r.v[f.id]??'').replace(/\s/g,'').replace(',','.'));if(r.v[f.id]!==undefined){if(isNaN(n))delete r.v[f.id];else r.v[f.id]=n}});
+  }
+  if(k==='link')recs(app,ent.id).forEach(r=>delete r.v[f.id]);
+  f[k]=v;save();render();
+}
+function addField(){const ent=E(A(),bEnt);ent.fields.push(F('Новое поле','text'));save();render();const ins=document.querySelectorAll('.frow:not(.fhead) input.inp');const l=ins[ins.length-1];if(l){l.focus();l.select()}}
+function delField(fid){const app=A(),ent=E(app,bEnt);if(ent.fields.length<=1)return toast('В таблице должно остаться хотя бы одно поле');const f=ent.fields.find(x=>x.id===fid);if(!confirm(`Удалить поле «${f.name}» и его данные во всех записях?`))return;ent.fields=ent.fields.filter(x=>x.id!==fid);recs(app,ent.id).forEach(r=>delete r.v[fid]);if(ent.view.groupBy===fid)ent.view.groupBy=null;if(ent.view.sort===fid)ent.view.sort=null;save();render()}
+function moveField(fid,d){const ent=E(A(),bEnt);const i=ent.fields.findIndex(x=>x.id===fid),j=i+d;if(j<0||j>=ent.fields.length)return;[ent.fields[i],ent.fields[j]]=[ent.fields[j],ent.fields[i]];save();render()}
+function moveEnt(d){const app=A();const i=app.entities.findIndex(e=>e.id===bEnt),j=i+d;if(j<0||j>=app.entities.length)return;[app.entities[i],app.entities[j]]=[app.entities[j],app.entities[i]];save();render()}
+function addEnt(){const app=A();const name=prompt('Название новой таблицы (например: Счета, Сотрудники, Объекты)','Новая таблица');if(!name||!name.trim())return;const t=T(name.trim(),[F('Название','text',{req:true})]);app.entities.push(t);app.records[t.id]=[];bEnt=t.id;save();render()}
+function delEnt(){
+  const app=A(),ent=E(app,bEnt);
+  const refs=[];app.entities.forEach(e=>e.fields.forEach(f=>{if(f.type==='link'&&f.link===ent.id&&e.id!==ent.id)refs.push(`${e.name} → ${f.name}`)}));
+  if(refs.length)return alert('На эту таблицу ссылаются поля:\n'+refs.join('\n')+'\n\nСначала удалите или измените их.');
+  if(!confirm(`Удалить таблицу «${ent.name}» и все её записи (${recs(app,ent.id).length})?`))return;
+  app.entities=app.entities.filter(e=>e.id!==ent.id);delete app.records[ent.id];bEnt=null;save();render();
+}
+function delApp(){
+  const app=A();if(!confirm(`Удалить приложение «${app.name}» со всеми данными? Рекомендуем сначала скачать резервную копию.`))return;
+  db.apps=db.apps.filter(a=>a.id!==app.id);if(!db.apps.length)db.apps.push(TEMPLATES.blank.make());db.cur={app:db.apps[0].id,ent:'dash'};save();render();
+}
+
+/* ---------- new app ---------- */
+let pickTpl='crm';
+function newAppDlg(){
+  closeSide();pickTpl='crm';
+  showDlg(`<div class="dlg"><div class="dlg-h"><h2>Новое приложение</h2><button class="btn sm" onclick="closeDlg()">✕</button></div>
+  <div class="dlg-b"><label class="lb">Название</label><input class="inp" id="nn" value="${esc(TEMPLATES.crm.name)}">
+  <label class="lb">Шаблон — потом всё можно поменять в конструкторе</label>
+  <div class="tpls">${Object.entries(TEMPLATES).map(([k,t])=>`<button class="tpl ${k==='crm'?'on':''}" data-k="${k}" onclick="selTpl('${k}')"><b>${esc(t.name)}</b><span>${esc(t.desc)}</span></button>`).join('')}</div>
+  <p class="hint">В шаблонах есть пара записей-примеров, их можно удалить.</p></div>
+  <div class="dlg-f"><span class="grow"></span><button class="btn" onclick="closeDlg()">Отмена</button><button class="btn pri" onclick="createApp()">Создать</button></div></div>`);
+}
+function selTpl(k){const nn=document.getElementById('nn');if(nn.value===TEMPLATES[pickTpl].name)nn.value=TEMPLATES[k].name;pickTpl=k;document.querySelectorAll('.tpl').forEach(b=>b.classList.toggle('on',b.dataset.k===k))}
+function createApp(){const a=TEMPLATES[pickTpl].make();const n=document.getElementById('nn').value.trim();if(n)a.name=n;a.color=PAL[db.apps.length%PAL.length];db.apps.push(a);closeDlg();go(a.id,'dash');toast('Приложение создано')}
+
+/* ---------- export / import ---------- */
+function download(name,data,type){const b=new Blob([data],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function exportAll(){download('bizbuilder-backup-'+today()+'.json',JSON.stringify(db,null,1),'application/json');toast('Копия скачана')}
+function importAll(inp){
+  const f=inp.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d||!Array.isArray(d.apps)||!d.apps.length)throw new Error('нет приложений');
+    if(!confirm('Заменить текущие данные данными из файла?'))return;db=d;if(!db.cur)db.cur={app:db.apps[0].id,ent:'dash'};save();render();toast('Данные загружены')}
+    catch(e){alert('Файл не подходит: '+e.message)}inp.value=''};
+  rd.readAsText(f);
+}
+function exportCSV(eid){
+  const app=A(),ent=E(app,eid);const cell=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+  const rows=[ent.fields.map(f=>cell(f.name)).join(';')];
+  filtered(app,ent).forEach(r=>rows.push(ent.fields.map(f=>{const v=r.v[f.id];if(v===undefined)return '""';
+    if(f.type==='link')return cell(linkTitle(app,f,v));if(f.type==='checkbox')return cell(v?'да':'');if(f.type==='date')return cell(fdate(v));
+    if(f.type==='number'||f.type==='money')return String(v).replace('.',',');return cell(v)}).join(';')));
+  download(ent.name+'.csv','\ufeff'+rows.join('\r\n'),'text/csv;charset=utf-8');
+}
+
+/* ---------- PIN ---------- */
+const PK='bizbuilder.pin';
+async function hpin(p){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('bb:'+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function lockShow(){const has=!!localStorage.getItem(PK);document.getElementById('lkT').textContent=has?'Введите PIN-код':'Придумайте PIN-код';
+  document.getElementById('lkH').textContent=has?'BizBuilder · данные этого устройства':'От 4 цифр. Он защищает данные на этом устройстве от посторонних.';
+  document.getElementById('lock').classList.add('on');setTimeout(()=>document.getElementById('lkP').focus(),50)}
+async function lockGo(){const el=document.getElementById('lkP'),p=el.value.trim(),er=document.getElementById('lkE');const saved=localStorage.getItem(PK);
+  if(!saved){if(p.length<4){er.textContent='Минимум 4 символа';return}localStorage.setItem(PK,await hpin(p))}
+  else if(await hpin(p)!==saved){er.textContent='Неверный PIN';el.value='';return}
+  sessionStorage.setItem(PK,'1');document.getElementById('lock').classList.remove('on');el.value='';er.textContent=''}
+function lockNow(){sessionStorage.removeItem(PK);closeSide();lockShow()}
+function changePin(){if(!confirm('Сменить PIN-код? Потребуется придумать новый.'))return;localStorage.removeItem(PK);lockNow()}
+if(location.protocol!=='file:'&&crypto.subtle&&!sessionStorage.getItem(PK))lockShow();
+
+render();
+</script>
+</body>
+</html>
